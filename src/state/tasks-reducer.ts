@@ -1,42 +1,13 @@
-import {TasksStateType} from '../App';
-import {v1} from 'uuid';
-import {AddTodolistActionType, RemoveTodolistActionType, SetTodolistsType} from './todolists-reducer';
+import {TasksStateType} from '../app/App';
+import {
+    AddTodolistActionType,
+    RemoveTodolistActionType,
+    SetTodolistsType
+} from './todolists-reducer';
 import {TaskPriorities, TaskStatuses, TaskType, todolistsAPI, UpdateTaskModelType} from '../api/todolists-api'
 import {Dispatch} from "redux";
 import {AppRootStateType} from "./store";
 
-export type RemoveTaskActionType = {
-    type: 'REMOVE-TASK',
-    todolistId: string
-    taskId: string
-}
-
-export type AddTaskActionType = {
-    type: 'ADD-TASK',
-    task: TaskType
-}
-
-export type ChangeTaskStatusActionType = {
-    type: 'CHANGE-TASK-STATUS',
-    todolistId: string
-    taskId: string
-    model: UpdateTaskModelType
-}
-
-export type ChangeTaskTitleActionType = {
-    type: 'CHANGE-TASK-TITLE',
-    todolistId: string
-    taskId: string
-    title: string
-}
-
-type ActionsType = RemoveTaskActionType | AddTaskActionType
-    | ChangeTaskStatusActionType
-    | ChangeTaskTitleActionType
-    | AddTodolistActionType
-    | RemoveTodolistActionType
-    | SetTodolistsType
-    | ReturnType<typeof setTasksAC>
 
 const initialState: TasksStateType = {
     /*"todolistId1": [
@@ -60,58 +31,34 @@ const initialState: TasksStateType = {
 
 export const tasksReducer = (state: TasksStateType = initialState, action: ActionsType): TasksStateType => {
     switch (action.type) {
-        case "SET-TASKS": {
-            return {
-                ...state,
-                [action.todoId]: action.tasks
-            }
-        }
+        case "SET-TASKS":
+            return {...state, [action.todoId]: action.tasks}
 
         case 'SET-TODOS': {
             const _state = {...state}
-
             action.todos.forEach((tl) => {
                 _state[tl.id] = []
             })
-
             return _state
         }
-        case 'REMOVE-TASK': {
-            const stateCopy = {...state}
-            const tasks = stateCopy[action.todolistId];
-            const newTasks = tasks.filter(t => t.id !== action.taskId);
-            stateCopy[action.todolistId] = newTasks;
-            return stateCopy;
-        }
-        case 'ADD-TASK': {
+        case 'REMOVE-TASK':
+            return {
+                ...state,
+                [action.todolistId]: state[action.todolistId].filter(t => t.id !== action.taskId)
+            }
+        case 'ADD-TASK':
             return {
                 ...state,
                 [action.task.todoListId]: [action.task, ...state[action.task.todoListId]]
             }
-        }
-        case 'CHANGE-TASK-STATUS': {
-            let todolistTasks = state[action.todolistId];
-            let newTasksArray = todolistTasks
-                .map(t => t.id === action.taskId ? {...t, ...action.model} : t);
-
-            state[action.todolistId] = newTasksArray;
-            return ({...state});
-        }
-        case 'CHANGE-TASK-TITLE': {
-            let todolistTasks = state[action.todolistId];
-            // найдём нужную таску:
-            let newTasksArray = todolistTasks
-                .map(t => t.id === action.taskId ? {...t, title: action.title} : t);
-
-            state[action.todolistId] = newTasksArray;
-            return ({...state});
-        }
-        case 'ADD-TODOLIST': {
+        case 'UPDATE-TASK':
             return {
                 ...state,
-                [action.todolistId]: []
+                [action.todolistId]: state[action.todolistId]
+                    .map(t => t.id === action.taskId ? {...t, ...action.model} : t)
             }
-        }
+        case 'ADD-TODOLIST':
+            return {...state, [action.todolistId]: []}
         case 'REMOVE-TODOLIST': {
             const copyState = {...state};
             delete copyState[action.id];
@@ -122,78 +69,42 @@ export const tasksReducer = (state: TasksStateType = initialState, action: Actio
     }
 }
 
-export const removeTaskAC = (taskId: string, todolistId: string): RemoveTaskActionType => {
-    return {type: 'REMOVE-TASK', taskId: taskId, todolistId: todolistId}
-}
-export const addTaskAC = (task: TaskType): AddTaskActionType => {
-    return {type: 'ADD-TASK', task}
-}
-export const changeTaskStatusAC = (taskId: string, model: UpdateTaskModelType, todolistId: string): ChangeTaskStatusActionType => {
-    return {type: 'CHANGE-TASK-STATUS', model, todolistId, taskId}
-}
-export const changeTaskTitleAC = (taskId: string, title: string, todolistId: string): ChangeTaskTitleActionType => {
-    return {type: 'CHANGE-TASK-TITLE', title, todolistId, taskId}
-}
+export const removeTaskAC = (taskId: string, todolistId: string) => ({
+    type: 'REMOVE-TASK',
+    taskId: taskId,
+    todolistId: todolistId
+} as const)
+
+export const addTaskAC = (task: TaskType) => ({type: 'ADD-TASK', task} as const)
+export const updateTaskAC = (taskId: string, model: UpdateTaskModelType, todolistId: string) => ({
+    type: 'UPDATE-TASK',
+    model, todolistId, taskId
+} as const)
 
 export const setTasksAC = (todoId: string, tasks: TaskType[]) => ({
     type: 'SET-TASKS',
-    tasks,
-    todoId
+    tasks, todoId
 } as const)
 
-export const getTasksTC = (todoId: string) => (dispatch: Dispatch) => {
+export const getTasksTC = (todoId: string) => (dispatch: Dispatch<ActionsType>) => {
     todolistsAPI.getTasks(todoId)
         .then((res) => {
             dispatch(setTasksAC(todoId, res.data.items))
         })
 }
 
-export const deleteTaskTC = (taskId: string, todoId: string) => (dispatch: Dispatch) => {
+export const deleteTaskTC = (taskId: string, todoId: string) => (dispatch: Dispatch<ActionsType>) => {
     todolistsAPI.deleteTask(todoId, taskId)
         .then(() => {
             dispatch(removeTaskAC(taskId, todoId))
         })
 }
 
-export const createTaskTC = (todoId: string, title: string) => (dispatch: Dispatch) => {
+export const createTaskTC = (todoId: string, title: string) => (dispatch: Dispatch<ActionsType>) => {
     todolistsAPI.createTask(todoId, title)
         .then((res) => {
             dispatch(addTaskAC(res.data.data.item))
         })
-}
-
-// export const updateTaskTC = (todoId: string, tasksId: string, status: TaskStatuses) =>
-//     (dispatch: Dispatch, getState: () => AppRootStateType) => {
-//
-//         const task = getState().tasks[todoId].find((t) => t.id === tasksId)
-//
-//         if (task) {
-//             const model: UpdateTaskModelType = {
-//                 title: task.title,
-//                 deadline: task.deadline,
-//                 startDate: task.startDate,
-//                 priority: task.priority,
-//                 description: task.description,
-//                 status,
-//             }
-//
-//             todolistsAPI.updateTask(todoId, tasksId, model)
-//                 .then(() => {
-//                     dispatch(changeTaskStatusAC(tasksId, status, todoId))
-//                 })
-//         }
-//     }
-
-
-/* refactoring */
-
-interface FlexType {
-    title?: string,
-    deadline?: string,
-    startDate?: string,
-    priority?: TaskPriorities,
-    description?: string,
-    status?: TaskStatuses
 }
 
 export const updateTaskTC = (todoId: string, taskId: string, data: FlexType) =>
@@ -214,7 +125,28 @@ export const updateTaskTC = (todoId: string, taskId: string, data: FlexType) =>
 
             todolistsAPI.updateTask(todoId, taskId, model)
                 .then(() => {
-                    dispatch(changeTaskStatusAC(taskId, model, todoId))
+                    dispatch(updateTaskAC(taskId, model, todoId))
                 })
         }
     }
+
+
+/* type */
+
+interface FlexType {
+    title?: string,
+    deadline?: string,
+    startDate?: string,
+    priority?: TaskPriorities,
+    description?: string,
+    status?: TaskStatuses
+}
+
+type ActionsType =
+    | ReturnType<typeof removeTaskAC>
+    | ReturnType<typeof addTaskAC>
+    | ReturnType<typeof updateTaskAC>
+    | AddTodolistActionType
+    | RemoveTodolistActionType
+    | SetTodolistsType
+    | ReturnType<typeof setTasksAC>
