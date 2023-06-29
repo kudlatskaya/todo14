@@ -14,7 +14,7 @@ import {Menu} from '@mui/icons-material';
 import {
     addTodolistAC,
     changeTodolistFilterAC,
-    changeTodolistTitleAC,
+    changeTodolistTitleAC, changeTodolistTitleTC, createTodolistTC,
     FilterValuesType, getTodosTC,
     removeTodolistTC,
     TodolistDomainType
@@ -64,14 +64,12 @@ function App() {
         dispatch(removeTodolistTC(todoId));
     }, []);
 
-    const changeTodolistTitle = useCallback(function (id: string, title: string) {
-        const action = changeTodolistTitleAC(id, title);
-        dispatch(action);
+    const changeTodolistTitle = useCallback(function (todoId: string, title: string) {
+        dispatch(changeTodolistTitleTC(todoId, title));
     }, []);
 
     const addTodolist = useCallback((title: string) => {
-        const action = addTodolistAC(title);
-        dispatch(action);
+        dispatch(createTodolistTC(title));
     }, [dispatch]);
 
     return (
