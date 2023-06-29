@@ -16,7 +16,7 @@ import {
     changeTodolistFilterAC,
     changeTodolistTitleAC,
     FilterValuesType, getTodosTC,
-    removeTodolistAC,
+    removeTodolistTC,
     TodolistDomainType
 } from './state/todolists-reducer'
 import { createTaskTC, deleteTaskTC, updateTaskTC } from './state/tasks-reducer';
@@ -36,7 +36,7 @@ function App() {
     const dispatch = useAppDispatch()
 
     useEffect(() => {
-        dispatch(getTodosTC('id'))
+        dispatch(getTodosTC())
     }, [])
 
     const removeTask = useCallback(function (taskId: string, todolistId: string) {
@@ -60,9 +60,8 @@ function App() {
         dispatch(action);
     }, []);
 
-    const removeTodolist = useCallback(function (id: string) {
-        const action = removeTodolistAC(id);
-        dispatch(action);
+    const removeTodolist = useCallback(function (todoId: string) {
+        dispatch(removeTodolistTC(todoId));
     }, []);
 
     const changeTodolistTitle = useCallback(function (id: string, title: string) {
