@@ -6,7 +6,7 @@ import {
 } from './todolists-reducer';
 import {TaskPriorities, TaskStatuses, TaskType, todolistsAPI, UpdateTaskModelType} from '../api/todolists-api'
 import {Dispatch} from "redux";
-import {AppRootStateType} from "./store";
+import {AppActionsType, AppRootStateType} from "./store";
 
 
 const initialState: TasksStateType = {
@@ -29,7 +29,7 @@ const initialState: TasksStateType = {
 
 }
 
-export const tasksReducer = (state: TasksStateType = initialState, action: ActionsType): TasksStateType => {
+export const tasksReducer = (state: TasksStateType = initialState, action: AppActionsType): TasksStateType => {
     switch (action.type) {
         case "SET-TASKS":
             return {...state, [action.todoId]: action.tasks}
@@ -86,21 +86,21 @@ export const setTasksAC = (todoId: string, tasks: TaskType[]) => ({
     tasks, todoId
 } as const)
 
-export const getTasksTC = (todoId: string) => (dispatch: Dispatch<ActionsType>) => {
+export const getTasksTC = (todoId: string) => (dispatch: Dispatch<AppActionsType>) => {
     todolistsAPI.getTasks(todoId)
         .then((res) => {
             dispatch(setTasksAC(todoId, res.data.items))
         })
 }
 
-export const deleteTaskTC = (taskId: string, todoId: string) => (dispatch: Dispatch<ActionsType>) => {
+export const deleteTaskTC = (taskId: string, todoId: string) => (dispatch: Dispatch<AppActionsType>) => {
     todolistsAPI.deleteTask(todoId, taskId)
         .then(() => {
             dispatch(removeTaskAC(taskId, todoId))
         })
 }
 
-export const createTaskTC = (todoId: string, title: string) => (dispatch: Dispatch<ActionsType>) => {
+export const createTaskTC = (todoId: string, title: string) => (dispatch: Dispatch<AppActionsType>) => {
     todolistsAPI.createTask(todoId, title)
         .then((res) => {
             dispatch(addTaskAC(res.data.data.item))
@@ -142,7 +142,7 @@ interface FlexType {
     status?: TaskStatuses
 }
 
-type ActionsType =
+export type TasksActionsType =
     | ReturnType<typeof removeTaskAC>
     | ReturnType<typeof addTaskAC>
     | ReturnType<typeof updateTaskAC>
