@@ -15,7 +15,7 @@ export type TodolistDomainType = TodolistType & {
     filter: FilterValuesType
 }
 
-export const todolistsReducer = (state: Array<TodolistDomainType> = initialState, action: AppActionsType): Array<TodolistDomainType> => {
+export const todolistsReducer = (state: Array<TodolistDomainType> = initialState, action: TodolistsActionsType): Array<TodolistDomainType> => {
     switch (action.type) {
         case "SET-TODOS":
             return action.todos.map((tl) => ({...tl, filter: 'all'}))
@@ -55,11 +55,21 @@ export const changeTodolistTitleAC = (id: string, title: string) => ({type: 'CHA
 export const changeTodolistFilterAC = (id: string, filter: FilterValuesType) => ({type: 'CHANGE-TODOLIST-FILTER', id: id, filter: filter} as const)
 export const setTodolistsAC = (todos: TodolistType[]) => ({type: 'SET-TODOS', todos} as const)
 
-export const getTodosTC = () => (dispatch: Dispatch<AppActionsType>): AppThunk => {
-    todolistsAPI.getTodolists()
-        .then((res) => {
-            dispatch(setTodolistsAC(res.data))
-        })
+// export const getTodosTC = (): AppThunk => (dispatch: Dispatch<AppActionsType>) => {
+//     todolistsAPI.getTodolists()
+//         .then((res) => {
+//             dispatch(setTodolistsAC(res.data))
+//         })
+// }
+
+export const getTodosTC = (): AppThunk => async (dispatch: Dispatch<AppActionsType>) => {
+    try {
+        const res = await todolistsAPI.getTodolists()
+        dispatch(setTodolistsAC(res.data))
+    } catch (e) {
+        throw new Error(e)
+    }
+
 }
 
 export const removeTodolistTC = (todoId: string): AppThunk => (dispatch: Dispatch<AppActionsType>) => {
